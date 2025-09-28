@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Combinatorial Optimization: Multi-Problem Solver</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for aesthetic and performance */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            /* Light blue-gray background */
+            min-height: 100vh;
+        }
+
+        .container-card {
+            background-color: #ffffff;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            /* Stronger shadow */
+            border: 1px solid #e0e7ff;
+            /* Subtle light blue border */
+        }
+
+        .input-style {
+            border: 1px solid #cbd5e1;
+            padding: 10px 14px;
+            border-radius: 8px;
+            width: 100%;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .input-style:focus {
+            border-color: #4f46e5;
+            /* Deep Indigo focus */
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3);
+            outline: none;
+        }
+
+        /* Custom tab styling for pill look and feel */
+        .tab-button {
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            border-radius: 9999px;
+            /* Pill shape */
+            color: #4b5563;
+        }
+
+        .tab-button.active {
+            border-color: #4f46e5;
+            background-color: #4f46e5;
+            color: #ffffff;
+            font-weight: 600;
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .tab-button:hover:not(.active) {
+            background-color: #eef2ff;
+            color: #4f46e5;
+        }
+
+        /* Style for matrix input cells */
+        .matrix-cell {
+            height: 40px;
+            text-align: center;
+            border: 1px solid #e5e7eb;
+            background-color: #f9fafb;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .matrix-cell:focus {
+            background-color: #ffffff;
+        }
+
+        /* Result card base style */
+        .result-card {
+            transition: all 0.3s ease-in-out;
+            border-left-width: 6px;
+            cursor: default;
+        }
+
+        .result-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body class="p-4 sm:p-8 min-h-screen">
+
+    <div class="max-w-6xl mx-auto container-card rounded-2xl p-6 md:p-10">
+        <h1 class="text-4xl font-extrabold text-gray-800 mb-2 pb-3 border-b-4 border-indigo-200">
+            <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+                Combinatorial Optimization Solver
+            </span>
+        </h1>
+        <p class="text-gray-500 mb-6">A multi-strategy framework for comparing optimization algorithms on different
+            NP-Hard problems.</p>
+
+        <!-- Tab Navigation -->
+        <div class="flex flex-wrap gap-3 mb-8 border-b border-gray-200 pb-3">
+            <button id="knapsack-tab" onclick="switchTab('knapsack')" class="tab-button active px-5 py-2 text-sm">0/1
+                Knapsack Problem</button>
+            <button id="tsp-tab" onclick="switchTab('tsp')" class="tab-button px-5 py-2 text-sm">Traveling Salesperson
+                Problem (TSP)</button>
+            <button id="graph-tab" onclick="switchTab('graph')" class="tab-button px-5 py-2 text-sm">Assignment Problem
+                (Graph Matching)</button>
+        </div>
+
+        <!-- Content Containers -->
+        <div id="knapsack-content" class="tab-content">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Knapsack: DP, Backtracking, B&B vs. Greedy</h2>
+
+            <!-- Input Section (Knapsack) -->
+            <div class="mb-8 p-6 bg-indigo-50/50 rounded-xl border border-indigo-100">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10m0-6h.01"></path>
+                    </svg>
+                    Problem Setup
+                </h3>
+                <div class="mb-4">
+                    <label for="capacity" class="block text-sm font-medium text-gray-700 mb-1">Knapsack Capacity
+                        (W):</label>
+                    <input type="number" id="capacity" class="input-style" value="50" min="1">
+                </div>
+
+                <h4 class="text-lg font-medium text-gray-700 mt-6 mb-3 border-b pb-1">Items (Value, Weight)</h4>
+                <div id="item-list" class="space-y-3">
+                    <!-- Initial items will be added here by JS -->
+                </div>
+
+                <button onclick="addItem()"
+                    class="mt-4 w-full sm:w-auto px-5 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition duration-150 shadow-md hover:shadow-lg">
+                    + Add Item
+                </button>
+            </div>
+
+            <!-- Run Button (Knapsack) -->
+            <button onclick="runKnapsack()"
+                class="w-full text-xl font-bold py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition duration-200 shadow-lg mb-8 hover:shadow-xl transform hover:scale-[1.005]">
+                Run Knapsack Optimization
+            </button>
+
+            <!-- Results Section (Knapsack) -->
+            <div id="knapsack-results" class="space-y-6">
+                <h3 class="text-2xl font-bold text-gray-900 border-b pb-2">Knapsack Comparison Results</h3>
+                <div id="message-box" class="hidden p-4 rounded-xl text-sm font-medium border"></div>
+
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- DP Result Card (Optimal Solution) -->
+                    <div id="dp-result" class="result-card p-5 rounded-xl border-l-blue-500 bg-white shadow-md">
+                        <h4 class="text-lg font-bold text-blue-800 mb-1 flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m5.618-4.203a4.994 4.994 0 011.752 1.83C22.259 8.683 22 11 22 12c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2c2.193 0 4.242.756 5.858 2.036">
+                                </path>
+                            </svg>
+                            DP
+                        </h4>
+                        <p class="text-xs text-gray-500 mb-3">Optimal, Pseudo-polynomial</p>
+                        <p class="text-3xl font-extrabold text-blue-600 mb-1" id="dp-value">N/A</p>
+                        <p class="text-sm font-medium text-gray-700" id="dp-time">Time: N/A</p>
+                        <div class="mt-3">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-blue-700">Selected
+                                Items:</span>
+                            <p class="text-xs text-gray-800 break-words" id="dp-items-list">No items selected.</p>
+                        </div>
+                    </div>
+
+                    <!-- Branch & Bound Result Card (Optimized Search) -->
+                    <div id="bnb-result" class="result-card p-5 rounded-xl border-l-purple-500 bg-white shadow-md">
+                        <h4 class="text-lg font-bold text-purple-800 mb-1 flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 0a9 9 0 019-9m-9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9c-.75 0-1.472.194-2.105.54M9 16.79C12.985 17.76 15 15.65 15 12c0-3.65-2.015-5.76-6-6.79">
+                                </path>
+                            </svg>
+                            B&B
+                        </h4>
+                        <p class="text-xs text-gray-500 mb-3">Optimal, Exponential (Pruned)</p>
+                        <p class="text-3xl font-extrabold text-purple-600 mb-1" id="bnb-value">N/A</p>
+                        <p class="text-sm font-medium text-gray-700" id="bnb-time">Time: N/A</p>
+                        <div class="mt-3">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-purple-700">Selected
+                                Items:</span>
+                            <p class="text-xs text-gray-800 break-words" id="bnb-items-list">No items selected.</p>
+                        </div>
+                    </div>
+
+                    <!-- Backtracking Result Card (Brute-Force Exact) -->
+                    <div id="bt-result" class="result-card p-5 rounded-xl border-l-red-500 bg-white shadow-md">
+                        <h4 class="text-lg font-bold text-red-800 mb-1 flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z">
+                                </path>
+                            </svg>
+                            Backtracking
+                        </h4>
+                        <p class="text-xs text-gray-500 mb-3">Optimal, Pure Exponential</p>
+                        <p class="text-3xl font-extrabold text-red-600 mb-1" id="bt-value">N/A</p>
+                        <p class="text-sm font-medium text-gray-700" id="bt-time">Time: N/A</p>
+                        <div class="mt-3">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-red-700">Selected
+                                Items:</span>
+                            <p class="text-xs text-gray-800 break-words" id="bt-items-list">No items selected.</p>
+                        </div>
+                    </div>
+
+                    <!-- Greedy Result Card (Approximation) -->
+                    <div id="greedy-result" class="result-card p-5 rounded-xl border-l-amber-500 bg-white shadow-md">
+                        <h4 class="text-lg font-bold text-amber-800 mb-1 flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                            Greedy
+                        </h4>
+                        <p class="text-xs text-gray-500 mb-3">Approximation, Fast</p>
+                        <p class="text-3xl font-extrabold text-amber-600 mb-1" id="greedy-value">N/A</p>
+                        <p class="text-sm font-medium text-gray-700" id="greedy-time">Time: N/A</p>
+                        <div class="mt-3">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-amber-700">Selected
+                                Items:</span>
+                            <p class="text-xs text-gray-800 break-words" id="greedy-items-list">No items selected.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tsp-content" class="tab-content hidden">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">TSP: Backtracking vs. Branch & Bound</h2>
+
+            <!-- Input Section (TSP) -->
+            <div class="mb-8 p-6 bg-indigo-50/50 rounded-xl border border-indigo-100">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z">
+                        </path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    Problem Setup (Distance Matrix)
+                </h3>
+
+                <div class="mb-4 flex items-center gap-4">
+                    <label for="num-cities" class="block text-sm font-medium text-gray-700">Number of Cities
+                        (N):</label>
+                    <input type="number" id="num-cities" class="input-style w-20" value="5" min="3" max="10"
+                        onchange="generateMatrix()">
+                    <p class="text-xs text-red-500">(Max 10 for performance)</p>
+                </div>
+
+                <h4 class="text-lg font-medium text-gray-700 mt-6 mb-3 border-b pb-1">Distances (Set $D_{i,j}$)</h4>
+                <div id="distance-matrix-container" class="overflow-x-auto">
+                    <!-- Matrix table generated here -->
+                </div>
+            </div>
+
+            <!-- Run Button (TSP) -->
+            <button onclick="runTSP()"
+                class="w-full text-xl font-bold py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition duration-200 shadow-lg mb-8 hover:shadow-xl transform hover:scale-[1.005]">
+                Run TSP Optimization
+            </button>
+
+            <!-- Results Section (TSP) -->
+            <div id="tsp-results" class="space-y-6">
+                <h3 class="text-2xl font-bold text-gray-900 border-b pb-2">TSP Comparison Results</h3>
+                <div id="tsp-message-box" class="hidden p-4 rounded-xl text-sm font-medium border"></div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Branch & Bound TSP Result Card -->
+                    <div id="tsp-bnb-result" class="result-card p-5 rounded-xl border-l-purple-500 bg-white shadow-md">
+                        <h4 class="text-lg font-bold text-purple-800 mb-1 flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                            Branch & Bound
+                        </h4>
+                        <p class="text-xs text-gray-500 mb-3">Optimal, Exponential (Pruned)</p>
+                        <p class="text-3xl font-extrabold text-purple-600 mb-1" id="tsp-bnb-cost">N/A</p>
+                        <p class="text-sm font-medium text-gray-700" id="tsp-bnb-time">Time: N/A</p>
+                        <div class="mt-3">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-purple-700">Shortest
+                                Tour:</span>
+                            <p class="text-xs text-gray-800 break-words" id="tsp-bnb-path">No path found.</p>
+                        </div>
+                    </div>
+
+                    <!-- Backtracking TSP Result Card -->
+                    <div id="tsp-bt-result" class="result-card p-5 rounded-xl border-l-red-500 bg-white shadow-md">
+                        <h4 class="text-lg font-bold text-red-800 mb-1 flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Backtracking
+                        </h4>
+                        <p class="text-xs text-gray-500 mb-3">Optimal, Pure Exponential</p>
+                        <p class="text-3xl font-extrabold text-red-600 mb-1" id="tsp-bt-cost">N/A</p>
+                        <p class="text-sm font-medium text-gray-700" id="tsp-bt-time">Time: N/A</p>
+                        <div class="mt-3">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-red-700">Shortest
+                                Tour:</span>
+                            <p class="text-xs text-gray-800 break-words" id="tsp-bt-path">No path found.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="graph-content" class="tab-content hidden">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Assignment Problem (Graph Matching): Backtracking vs.
+                Branch & Bound</h2>
+
+            <!-- Input Section (Assignment Problem) -->
+            <div class="mb-8 p-6 bg-indigo-50/50 rounded-xl border border-indigo-100">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                        </path>
+                    </svg>
+                    Problem Setup (Cost Matrix)
+                </h3>
+
+                <div class="mb-4 flex items-center gap-4">
+                    <label for="num-agents" class="block text-sm font-medium text-gray-700">Number of Agents/Tasks
+                        (N):</label>
+                    <input type="number" id="num-agents" class="input-style w-20" value="4" min="2" max="8"
+                        onchange="generateAPMatrix()">
+                    <p class="text-xs text-red-500">(Max 8 for performance)</p>
+                </div>
+
+                <h4 class="text-lg font-medium text-gray-700 mt-6 mb-3 border-b pb-1">Cost Matrix (Cost of Agent $i$
+                    performing Task $j$)</h4>
+                <div id="ap-matrix-container" class="overflow-x-auto">
+                    <!-- Matrix table generated here -->
+                </div>
+            </div>
+
+            <!-- Run Button (AP) -->
+            <button onclick="runAP()"
+                class="w-full text-xl font-bold py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition duration-200 shadow-lg mb-8 hover:shadow-xl transform hover:scale-[1.005]">
+                Run Assignment Optimization
+            </button>
+
+            <!-- Results Section (AP) -->
+            <div id="ap-results" class="space-y-6">
+                <h3 class="text-2xl font-bold text-gray-900 border-b pb-2">Assignment Comparison Results</h3>
+                <div id="ap-message-box" class="hidden p-4 rounded-xl text-sm font-medium border"></div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Branch & Bound AP Result Card -->
+                    <div id="ap-bnb-result" class="result-card p-5 rounded-xl border-l-purple-500 bg-white shadow-md">
+                        <h4 class="text-lg font-bold text-purple-800 mb-1 flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z">
+                                </path>
+                            </svg>
+                            Branch & Bound
+                        </h4>
+                        <p class="text-xs text-gray-500 mb-3">Optimal, Exponential (Pruned)</p>
+                        <p class="text-3xl font-extrabold text-purple-600 mb-1" id="ap-bnb-cost">N/A</p>
+                        <p class="text-sm font-medium text-gray-700" id="ap-bnb-time">Time: N/A</p>
+                        <div class="mt-3">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-purple-700">Optimal
+                                Assignment:</span>
+                            <p class="text-xs text-gray-800 break-words" id="ap-bnb-assignment">No assignment found.</p>
+                        </div>
+                    </div>
+
+                    <!-- Backtracking AP Result Card -->
+                    <div id="ap-bt-result" class="result-card p-5 rounded-xl border-l-red-500 bg-white shadow-md">
+                        <h4 class="text-lg font-bold text-red-800 mb-1 flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0h10">
+                                </path>
+                            </svg>
+                            Backtracking
+                        </h4>
+                        <p class="text-xs text-gray-500 mb-3">Optimal, Pure Exponential</p>
+                        <p class="text-3xl font-extrabold text-red-600 mb-1" id="ap-bt-cost">N/A</p>
+                        <p class="text-sm font-medium text-gray-700" id="ap-bt-time">Time: N/A</p>
+                        <div class="mt-3">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-red-700">Optimal
+                                Assignment:</span>
+                            <p class="text-xs text-gray-800 break-words" id="ap-bt-assignment">No assignment found.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Developer Message Box -->
+        <div id="dev-console" class="mt-10 p-4 bg-gray-800 rounded-lg text-xs font-mono text-gray-300 shadow-inner">
+            Console Output: Ready to run.
+        </div>
+    </div>
+
+    <!-- Overall Strategy Conclusion Section -->
+    <div class="max-w-6xl mx-auto container-card rounded-2xl p-6 md:p-10 mt-8 border-t-8 border-indigo-500/80">
+        <h2 class="text-3xl font-bold text-indigo-700 mb-4 flex items-center gap-2">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 19V6a2 2 0 00-2-2H5a2 2 0 00-2 2v13m7 0v-4a2 2 0 012-2h2a2 2 0 012 2v4m-7 0h7"></path>
+            </svg>
+            Overall Strategy Conclusion: Which Algorithm Was Best?
+        </h2>
+        <div id="overall-conclusion-content" class="space-y-4 text-gray-800">
+            <p class="text-lg">Run at least one problem (Knapsack, TSP, or Assignment) to generate a comparative
+                analysis here.</p>
+        </div>
+    </div>
+
+    <script>
+        // --- Global UI & Utility References ---
+        const itemList = document.getElementById('item-list');
+        const capacityInput = document.getElementById('capacity');
+        const msgBox = document.getElementById('message-box');
+        const tspMsgBox = document.getElementById('tsp-message-box');
+        const apMsgBox = document.getElementById('ap-message-box');
+        const devConsole = document.getElementById('dev-console');
+        const matrixContainer = document.getElementById('distance-matrix-container');
+        const apMatrixContainer = document.getElementById('ap-matrix-container');
+        const conclusionContent = document.getElementById('overall-conclusion-content');
+
+
+        // Knapsack Elements
+        const dpValueEl = document.getElementById('dp-value');
+        const dpTimeEl = document.getElementById('dp-time');
+        const dpItemsEl = document.getElementById('dp-items-list');
+        const greedyValueEl = document.getElementById('greedy-value');
+        const greedyTimeEl = document.getElementById('greedy-time');
+        const greedyItemsEl = document.getElementById('greedy-items-list');
+        const btValueEl = document.getElementById('bt-value');
+        const btTimeEl = document.getElementById('bt-time');
+        const btItemsEl = document.getElementById('bt-items-list');
+        const bnbValueEl = document.getElementById('bnb-value');
+        const bnbTimeEl = document.getElementById('bnb-time');
+        const bnbItemsEl = document.getElementById('bnb-items-list');
+
+        // TSP Elements
+        const numCitiesInput = document.getElementById('num-cities');
+        const tspBnbCostEl = document.getElementById('tsp-bnb-cost');
+        const tspBnbTimeEl = document.getElementById('tsp-bnb-time');
+        const tspBnbPathEl = document.getElementById('tsp-bnb-path');
+        const tspBtCostEl = document.getElementById('tsp-bt-cost');
+        const tspBtTimeEl = document.getElementById('tsp-bt-time');
+        const tspBtPathEl = document.getElementById('tsp-bt-path');
+
+        // AP Elements
+        const numAgentsInput = document.getElementById('num-agents');
+        const apBnbCostEl = document.getElementById('ap-bnb-cost');
+        const apBnbTimeEl = document.getElementById('ap-bnb-time');
+        const apBnbAssignmentEl = document.getElementById('ap-bnb-assignment');
+        const apBtCostEl = document.getElementById('ap-bt-cost');
+        const apBtTimeEl = document.getElementById('ap-bt-time');
+        const apBtAssignmentEl = document.getElementById('ap-bt-assignment');
+
+
+        // --- Constants & Global State ---
+        const INFINITY = 1e9;
+        // Global storage for the latest results
+        let lastKnapsackResult = null;
+        let lastTSPResult = null;
+        let lastAPResult = null;
+
+        // --- Utility Functions ---
+
+        /** Logs messages to a visible console area for user/developer feedback. */
+        function log(message) {
+            devConsole.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}<br>` + devConsole.innerHTML;
+        }
+
+        /** Shows a user-facing error message. */
+        function showMessage(message, isError = true, targetBox = msgBox) {
+            targetBox.textContent = message;
+            targetBox.classList.remove('hidden');
+            if (isError) {
+                targetBox.className = 'p-4 rounded-xl text-sm font-medium border border-red-300 bg-red-100 text-red-700';
+            } else {
+                targetBox.className = 'p-4 rounded-xl text-sm font-medium border border-green-300 bg-green-100 text-green-700';
+            }
+        }
+
+        /** Hides the user-facing message box. */
+        function hideMessage(targetBox = msgBox) {
+            targetBox.classList.add('hidden');
+        }
+
+        /** Represents an item with value, weight, and a calculated ratio. */
+        class Item {
+            constructor(id, value, weight) {
+                this.id = id;
+                this.value = value;
+                this.weight = weight;
+                this.ratio = weight > 0 ? value / weight : 0;
+            }
+        }
+
+        // --- Tab Switching Logic ---
+        function switchTab(tabId) {
+            const tabs = ['knapsack', 'tsp', 'graph'];
+            tabs.forEach(id => {
+                const tabButton = document.getElementById(`${id}-tab`);
+                const tabContent = document.getElementById(`${id}-content`);
+
+                if (id === tabId) {
+                    tabButton.classList.add('active');
+                    tabContent.classList.remove('hidden');
+                } else {
+                    tabButton.classList.remove('active');
+                    tabContent.classList.add('hidden');
+                }
+            });
+        }
+
+        // --- Knapsack Data Management (UI) ---
+
+        let itemIdCounter = 0;
+
+        /** Creates the HTML for a single item input row. */
+        function createItemHtml(id, initialValue, initialWeight) {
+            const itemDiv = document.createElement('div');
+            itemDiv.id = `item-${id}`;
+            itemDiv.className = 'flex flex-col sm:flex-row gap-2 items-center p-3 bg-white rounded-lg border shadow-sm';
+            itemDiv.innerHTML = `
+                <div class="flex-grow w-full">
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Item ${id}</label>
+                    <div class="flex gap-2">
+                        <input type="number" data-id="${id}" data-type="value" value="${initialValue}" min="1" class="input-style flex-1" placeholder="Value">
+                        <input type="number" data-id="${id}" data-type="weight" value="${initialWeight}" min="1" class="input-style flex-1" placeholder="Weight">
+                    </div>
+                </div>
+                <button onclick="removeItem(${id})" class="flex-shrink-0 p-2 text-red-500 hover:text-red-700 transition duration-150 rounded-full border border-red-200 hover:bg-red-50" title="Remove Item">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            `;
+            return itemDiv;
+        }
+
+        /** Adds a new item row to the UI. */
+        function addItem(initialValue = 10, initialWeight = 5) {
+            itemIdCounter++;
+            const itemHtml = createItemHtml(itemIdCounter, initialValue, initialWeight);
+            itemList.appendChild(itemHtml);
+        }
+
+        /** Removes an item row from the UI. */
+        function removeItem(id) {
+            const itemEl = document.getElementById(`item-${id}`);
+            if (itemEl) {
+                itemList.removeChild(itemEl);
+                log(`Removed Item ${id}`);
+            }
+        }
+
+        /** Reads all item data from the UI. */
+        function getItemsFromUI() {
+            const items = [];
+            const itemInputs = itemList.querySelectorAll('input[type="number"]');
+
+            // Group inputs by item ID
+            const itemData = {};
+            itemInputs.forEach(input => {
+                const id = parseInt(input.dataset.id);
+                const type = input.dataset.type;
+                const value = parseInt(input.value);
+
+                if (!itemData[id]) {
+                    itemData[id] = { id: id, value: 0, weight: 0 };
+                }
+
+                if (type === 'value') {
+                    itemData[id].value = value;
+                } else if (type === 'weight') {
+                    itemData[id].weight = value;
+                }
+            });
+
+            // Validate and create Item objects
+            for (const key in itemData) {
+                const data = itemData[key];
+                if (data.value <= 0 || data.weight <= 0) {
+                    throw new Error(`Item ${data.id} has invalid value or weight (must be > 0).`);
+                }
+                items.push(new Item(data.id, data.value, data.weight));
+            }
+
+            return items;
+        }
+
+        // --- Knapsack Algorithms (Previously implemented) ---
+
+        /** 0/1 Knapsack using Dynamic Programming (Optimal Solution) */
+        function dpKnapsack(capacity, items) {
+            const n = items.length;
+            const dp = Array(n + 1).fill(0).map(() => Array(capacity + 1).fill(0));
+
+            for (let i = 1; i <= n; i++) {
+                const item = items[i - 1];
+                for (let w = 1; w <= capacity; w++) {
+                    if (item.weight <= w) {
+                        const include = item.value + dp[i - 1][w - item.weight];
+                        const exclude = dp[i - 1][w];
+                        dp[i][w] = Math.max(include, exclude);
+                    } else {
+                        dp[i][w] = dp[i - 1][w];
+                    }
+                }
+            }
+            const selectedItems = [];
+            let w = capacity;
+            for (let i = n; i > 0 && w > 0; i--) {
+                if (dp[i][w] !== dp[i - 1][w]) {
+                    const item = items[i - 1];
+                    selectedItems.push(item);
+                    w -= item.weight;
+                }
+            }
+            return {
+                maxValue: dp[n][capacity],
+                selectedItems: selectedItems.reverse()
+            };
+        }
+
+        /** 0/1 Knapsack using Greedy Heuristic (Approximation) */
+        function greedyKnapsack(capacity, items) {
+            const sortedItems = [...items].sort((a, b) => b.ratio - a.ratio);
+            let currentValue = 0;
+            let currentWeight = 0;
+            const selectedItems = [];
+
+            for (const item of sortedItems) {
+                if (currentWeight + item.weight <= capacity) {
+                    currentValue += item.value;
+                    currentWeight += item.weight;
+                    selectedItems.push(item);
+                }
+            }
+            return {
+                maxValue: currentValue,
+                selectedItems: selectedItems.sort((a, b) => a.id - b.id)
+            };
+        }
+
+        // --- Knapsack Backtracking (Brute-Force) Implementation ---
+        let maxBTValue;
+        let bestBTItems;
+        function backtrackingHelper(i, currentWeight, currentValue, capacity, items, currentItems) {
+            if (i === items.length) {
+                if (currentValue > maxBTValue) {
+                    maxBTValue = currentValue;
+                    bestBTItems = [...currentItems];
+                }
+                return;
+            }
+            const item = items[i];
+            if (currentWeight + item.weight <= capacity) {
+                currentItems.push(item);
+                backtrackingHelper(i + 1, currentWeight + item.weight, currentValue + item.value, capacity, items, currentItems);
+                currentItems.pop();
+            }
+            backtrackingHelper(i + 1, currentWeight, currentValue, capacity, items, currentItems);
+        }
+        function backtrackingKnapsack(capacity, items) {
+            maxBTValue = 0;
+            bestBTItems = [];
+            backtrackingHelper(0, 0, 0, capacity, items, []);
+            return {
+                maxValue: maxBTValue,
+                selectedItems: bestBTItems.sort((a, b) => a.id - b.id)
+            };
+        }
+
+        // --- Knapsack Branch and Bound Implementation ---
+        let maxBNBValue;
+        let bestBNBItems;
+
+        function calculateBound(remainingCapacity, items, startIndex) {
+            let currentCapacity = remainingCapacity;
+            let boundValue = 0;
+            for (let i = startIndex; i < items.length; i++) {
+                const item = items[i];
+                if (currentCapacity <= 0) break;
+                if (item.weight <= currentCapacity) {
+                    boundValue += item.value;
+                    currentCapacity -= item.weight;
+                } else {
+                    boundValue += item.value * (currentCapacity / item.weight);
+                    currentCapacity = 0;
+                    break;
+                }
+            }
+            return boundValue;
+        }
+
+        function bnbHelper(i, currentWeight, currentValue, capacity, items, currentItems) {
+            if (currentValue > maxBNBValue) {
+                maxBNBValue = currentValue;
+                bestBNBItems = [...currentItems];
+            }
+            if (i === items.length) {
+                return;
+            }
+
+            const bound = currentValue + calculateBound(capacity - currentWeight, items, i);
+
+            if (bound <= maxBNBValue) {
+                return;
+            }
+
+            const item = items[i];
+            if (currentWeight + item.weight <= capacity) {
+                currentItems.push(item);
+                bnbHelper(i + 1, currentWeight + item.weight, currentValue + item.value, capacity, items, currentItems);
+                currentItems.pop();
+            }
+            bnbHelper(i + 1, currentWeight, currentValue, capacity, items, currentItems);
+        }
+
+        function bnbKnapsack(capacity, items) {
+            const bnbItemsSortedByRatio = [...items].sort((a, b) => b.ratio - a.ratio);
+
+            maxBNBValue = 0;
+            bestBNBItems = [];
+
+            bnbHelper(0, 0, 0, capacity, bnbItemsSortedByRatio, []);
+
+            return {
+                maxValue: maxBNBValue,
+                selectedItems: bestBNBItems.sort((a, b) => a.id - b.id)
+            };
+        }
+
+        // --- Knapsack Main Controller ---
+
+        /** Runs all Knapsack algorithms and updates the UI with performance metrics. */
+        function runKnapsack() {
+            hideMessage(msgBox);
+            log('Starting Knapsack optimization run...');
+
+            let capacity;
+            let items;
+
+            try {
+                capacity = parseInt(capacityInput.value);
+                if (isNaN(capacity) || capacity <= 0) {
+                    throw new Error("Knapsack Capacity must be a positive number.");
+                }
+                items = getItemsFromUI();
+                if (items.length === 0) {
+                    throw new Error("Please add at least one item to the list.");
+                }
+                log(`Capacity: ${capacity}. Total Items: ${items.length}`);
+            } catch (e) {
+                showMessage(`Input Error: ${e.message}`, true, msgBox);
+                log(`ERROR: ${e.message}`);
+                return;
+            }
+
+            // Run Algorithms
+            const dpStart = performance.now();
+            const dpResult = dpKnapsack(capacity, items);
+            const dpEnd = performance.now();
+            const dpTime = (dpEnd - dpStart).toFixed(3);
+
+            const btStart = performance.now();
+            const btResult = backtrackingKnapsack(capacity, items);
+            const btEnd = performance.now();
+            const btTime = (btEnd - btStart).toFixed(3);
+
+            const bnbStart = performance.now();
+            const bnbResult = bnbKnapsack(capacity, items);
+            const bnbEnd = performance.now();
+            const bnbTime = (bnbEnd - bnbStart).toFixed(3);
+
+            const greedyStart = performance.now();
+            const greedyResult = greedyKnapsack(capacity, items);
+            const greedyEnd = performance.now();
+            const greedyTime = (greedyEnd - greedyStart).toFixed(3);
+
+            // Update UI
+            dpValueEl.textContent = `Value: ${dpResult.maxValue}`;
+            dpTimeEl.textContent = `Time: ${dpTime} ms`;
+            dpItemsEl.textContent = dpResult.selectedItems.map(i => `Item ${i.id} (V:${i.value}, W:${i.weight})`).join(' | ');
+
+            btValueEl.textContent = `Value: ${btResult.maxValue}`;
+            btTimeEl.textContent = `Time: ${btTime} ms`;
+            btItemsEl.textContent = btResult.selectedItems.map(i => `Item ${i.id} (V:${i.value}, W:${i.weight})`).join(' | ');
+
+            bnbValueEl.textContent = `Value: ${bnbResult.maxValue}`;
+            bnbTimeEl.textContent = `Time: ${bnbTime} ms`;
+            bnbItemsEl.textContent = bnbResult.selectedItems.map(i => `Item ${i.id} (V:${i.value}, W:${i.weight})`).join(' | ');
+
+            greedyValueEl.textContent = `Value: ${greedyResult.maxValue}`;
+            greedyTimeEl.textContent = `Time: ${greedyTime} ms`;
+            greedyItemsEl.textContent = greedyResult.selectedItems.map(i => `Item ${i.id} (V:${i.value}, W:${i.weight})`).join(' | ');
+
+            let optimalValue = dpResult.maxValue;
+            let message = `All optimal algorithms (DP, BT, B&B) found the same maximum value: ${optimalValue}.`;
+
+            if (greedyResult.maxValue < optimalValue) {
+                message += ` The Greedy heuristic was suboptimal, finding only ${greedyResult.maxValue}.`;
+            } else {
+                message += ` The Greedy heuristic coincidentally found the optimal value: ${optimalValue}.`;
+            }
+
+            message += ` Performance comparison: Greedy (${greedyTime}ms) vs. DP (${dpTime}ms) vs. B&B (${bnbTime}ms) vs. BT (${btTime}ms).`;
+
+            showMessage(message, false, msgBox);
+            log(`Knapsack run complete.`);
+
+            // Save results for overall conclusion
+            lastKnapsackResult = {
+                dp: { value: dpResult.maxValue, time: parseFloat(dpTime), optimal: true, type: 'DP' },
+                bt: { value: btResult.maxValue, time: parseFloat(btTime), optimal: true, type: 'BT' },
+                bnb: { value: bnbResult.maxValue, time: parseFloat(bnbTime), optimal: true, type: 'B&B' },
+                greedy: { value: greedyResult.maxValue, time: parseFloat(greedyTime), optimal: greedyResult.maxValue === optimalValue, type: 'Greedy' },
+                optimalValue: optimalValue
+            };
+            updateOverallConclusion();
+        }
+
+
+        // --- TSP Data Management & UI ---
+
+        let TSP_DIST_MATRIX = [];
+
+        /** Generates a symmetric, default distance matrix. */
+        function generateDefaultMatrix(n) {
+            const matrix = Array(n).fill(0).map(() => Array(n).fill(0));
+            for (let i = 0; i < n; i++) {
+                for (let j = i + 1; j < n; j++) {
+                    const rand = Math.floor(Math.random() * 50) + 10; // Distances 10-60
+                    matrix[i][j] = rand;
+                    matrix[j][i] = rand;
+                }
+            }
+            return matrix;
+        }
+
+        /** Generates the UI table for the distance matrix. */
+        function generateMatrix() {
+            const n = Math.min(parseInt(numCitiesInput.value), 10);
+            if (isNaN(n) || n < 3) return;
+            numCitiesInput.value = n;
+
+            // Use the current matrix if it matches size, otherwise generate new
+            if (TSP_DIST_MATRIX.length !== n) {
+                TSP_DIST_MATRIX = generateDefaultMatrix(n);
+            }
+
+            let html = `<table class="min-w-full divide-y divide-gray-200 shadow overflow-hidden sm:rounded-lg">`;
+            html += `<thead class="bg-gray-50"><tr class="text-xs font-medium text-gray-500 uppercase tracking-wider"><th></th>`;
+            for (let j = 0; j < n; j++) {
+                html += `<th class="p-2 text-center">City ${j + 1}</th>`;
+            }
+            html += `</tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
+
+            for (let i = 0; i < n; i++) {
+                html += `<tr><td class="p-2 text-sm font-medium text-gray-900 text-center bg-gray-50">City ${i + 1}</td>`;
+                for (let j = 0; j < n; j++) {
+                    let value = TSP_DIST_MATRIX[i][j] === 0 ? '—' : TSP_DISTMATRIX[i][j];
+                    let disabled = (i === j) ? 'disabled' : '';
+                    let bgColor = (i === j) ? 'bg-gray-200' : 'bg-white';
+
+                    html += `<td class="p-1"><input type="number" min="1" ${disabled} data-row="${i}" data-col="${j}" 
+                             value="${i === j ? '' : value}" class="matrix-cell ${bgColor} text-sm" 
+                             onchange="updateMatrix(this)"></td>`;
+                }
+                html += `</tr>`;
+            }
+            html += `</tbody></table>`;
+            matrixContainer.innerHTML = html;
+            log(`Generated ${n}x${n} distance matrix.`);
+        }
+
+        /** Updates the symmetric matrix based on user input. */
+        function updateMatrix(input) {
+            const i = parseInt(input.dataset.row);
+            const j = parseInt(input.dataset.col);
+            const value = parseInt(input.value);
+            const n = TSP_DIST_MATRIX.length;
+
+            if (isNaN(value) || value <= 0) {
+                log(`Invalid distance value entered.`);
+                input.value = TSP_DIST_MATRIX[i][j] || 10; // Revert or set default
+                return;
+            }
+
+            if (i >= 0 && i < n && j >= 0 && j < n) {
+                TSP_DIST_MATRIX[i][j] = value;
+                TSP_DIST_MATRIX[j][i] = value;
+
+                // Update the symmetric cell in the UI
+                const symmetricInput = matrixContainer.querySelector(`input[data-row="${j}"][data-col="${i}"]`);
+                if (symmetricInput) {
+                    symmetricInput.value = value;
+                }
+            }
+            log(`Updated distance D(${i + 1}, ${j + 1}) to ${value}`);
+        }
+
+        // --- TSP Backtracking (BT) Algorithm ---
+
+        let minTSP_BT_Cost;
+        let bestTSP_BT_Path;
+
+        function tspBacktrackingHelper(currentCost, currentPath, visited) {
+            const n = TSP_DIST_MATRIX.length;
+            const lastCity = currentPath[currentPath.length - 1];
+
+            // Prune: If current path cost exceeds the best found so far, stop.
+            if (currentCost >= minTSP_BT_Cost) {
+                return;
+            }
+
+            // Base Case 1: All cities visited
+            if (currentPath.length === n) {
+                const costToStart = TSP_DIST_MATRIX[lastCity][currentPath[0]];
+                if (costToStart > 0) { // Check if path back to start exists
+                    const totalCost = currentCost + costToStart;
+                    if (totalCost < minTSP_BT_Cost) {
+                        minTSP_BT_Cost = totalCost;
+                        bestTSP_BT_Path = [...currentPath, currentPath[0]];
+                    }
+                }
+                return;
+            }
+
+            // Recursive Step: Try moving to unvisited cities
+            for (let nextCity = 0; nextCity < n; nextCity++) {
+                if (!visited[nextCity] && TSP_DIST_MATRIX[lastCity][nextCity] > 0) {
+                    currentPath.push(nextCity);
+                    visited[nextCity] = true;
+
+                    tspBacktrackingHelper(
+                        currentCost + TSP_DIST_MATRIX[lastCity][nextCity],
+                        currentPath,
+                        visited
+                    );
+
+                    // Backtrack
+                    visited[nextCity] = false;
+                    currentPath.pop();
+                }
+            }
+        }
+
+        function tspBacktracking() {
+            const n = TSP_DIST_MATRIX.length;
+            minTSP_BT_Cost = INFINITY;
+            bestTSP_BT_Path = [];
+
+            // Start from City 0 (simplifies, result is rotationally equivalent)
+            const initialPath = [0];
+            const visited = Array(n).fill(false);
+            visited[0] = true;
+
+            tspBacktrackingHelper(0, initialPath, visited);
+
+            return {
+                minCost: minTSP_BT_Cost === INFINITY ? -1 : minTSP_BT_Cost,
+                bestPath: bestTSP_BT_Path.map(c => c + 1) // Convert 0-indexed to 1-indexed cities
+            };
+        }
+
+        // --- TSP Branch & Bound (B&B) Algorithm ---
+
+        let minTSP_BNB_Cost;
+        let bestTSP_BNB_Path;
+
+        /** Calculates a lower bound: current cost + sum of min cost out-edges from unvisited nodes */
+        function calculateTSPLowerBound(currentCost, currentPath, visited) {
+            const n = TSP_DIST_MATRIX.length;
+            let lowerBound = currentCost;
+
+            for (let i = 0; i < n; i++) {
+                if (!visited[i] || i === currentPath[0]) { // Check unvisited nodes, plus start node (0) for return edge
+                    let minEdge1 = INFINITY;
+
+                    // Find the minimum outgoing edge for unvisited cities
+                    for (let j = 0; j < n; j++) {
+                        if (i !== j && TSP_DIST_MATRIX[i][j] > 0) {
+                            if (TSP_DIST_MATRIX[i][j] < minEdge1) {
+                                minEdge1 = TSP_DIST_MATRIX[i][j];
+                            }
+                        }
+                    }
+
+                    // Add the minimum outgoing edge cost for unvisited cities to the bound
+                    if (!visited[i] && minEdge1 !== INFINITY) {
+                        lowerBound += minEdge1;
+                    }
+                }
+            }
+            return lowerBound;
+        }
+
+        function tspBnBHelper(currentCost, currentPath, visited) {
+            const n = TSP_DIST_MATRIX.length;
+            const lastCity = currentPath[currentPath.length - 1];
+
+            // Pruning Check (Bounding)
+            // Calculate potential lower bound
+            const lowerBound = calculateTSPLowerBound(currentCost, currentPath, visited);
+
+            if (lowerBound >= minTSP_BNB_Cost) {
+                return; // Prune this branch
+            }
+
+            // Base Case 1: All cities visited
+            if (currentPath.length === n) {
+                const costToStart = TSP_DIST_MATRIX[lastCity][currentPath[0]];
+                if (costToStart > 0) {
+                    const totalCost = currentCost + costToStart;
+                    if (totalCost < minTSP_BNB_Cost) {
+                        minTSP_BNB_Cost = totalCost;
+                        bestTSP_BNB_Path = [...currentPath, currentPath[0]];
+                    }
+                }
+                return;
+            }
+
+            // Recursive Step
+            for (let nextCity = 0; nextCity < n; nextCity++) {
+                if (!visited[nextCity] && TSP_DIST_MATRIX[lastCity][nextCity] > 0) {
+                    currentPath.push(nextCity);
+                    visited[nextCity] = true;
+
+                    tspBnBHelper(
+                        currentCost + TSP_DIST_MATRIX[lastCity][nextCity],
+                        currentPath,
+                        visited
+                    );
+
+                    // Backtrack
+                    visited[nextCity] = false;
+                    currentPath.pop();
+                }
+            }
+        }
+
+        function tspBranchAndBound() {
+            const n = TSP_DIST_MATRIX.length;
+            minTSP_BNB_Cost = INFINITY;
+            bestTSP_BNB_Path = [];
+
+            const initialPath = [0];
+            const visited = Array(n).fill(false);
+            visited[0] = true;
+
+            tspBnBHelper(0, initialPath, visited);
+
+            return {
+                minCost: minTSP_BNB_Cost === INFINITY ? -1 : minTSP_BNB_Cost,
+                bestPath: bestTSP_BNB_Path.map(c => c + 1)
+            };
+        }
+
+
+        // --- TSP Main Controller ---
+
+        function runTSP() {
+            hideMessage(tspMsgBox);
+            log('Starting TSP optimization run...');
+            const n = TSP_DIST_MATRIX.length;
+
+            if (n < 3) {
+                showMessage("Please set the number of cities to 3 or more.", true, tspMsgBox);
+                return;
+            }
+
+            // Basic validation
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < n; j++) {
+                    if (i !== j && (TSP_DIST_MATRIX[i][j] <= 0 || isNaN(TSP_DIST_MATRIX[i][j]))) {
+                        showMessage(`Distance D(${i + 1}, ${j + 1}) must be a positive number.`, true, tspMsgBox);
+                        return;
+                    }
+                }
+            }
+
+            // --- Run Backtracking (BT) ---
+            const btStart = performance.now();
+            const btResult = tspBacktracking();
+            const btEnd = performance.now();
+            const btTime = (btEnd - btStart).toFixed(3);
+            log(`TSP Backtracking complete. Cost: ${btResult.minCost}, Time: ${btTime}ms`);
+
+            // --- Run Branch and Bound (B&B) ---
+            const bnbStart = performance.now();
+            const bnbResult = tspBranchAndBound();
+            const bnbEnd = performance.now();
+            const bnbTime = (bnbEnd - bnbStart).toFixed(3);
+            log(`TSP Branch & Bound complete. Cost: ${bnbResult.minCost}, Time: ${bnbTime}ms`);
+
+            // --- Update UI ---
+            tspBtCostEl.textContent = `Cost: ${btResult.minCost === -1 ? 'No Tour Found' : btResult.minCost}`;
+            tspBtTimeEl.textContent = `Time: ${btTime} ms`;
+            tspBtPathEl.textContent = btResult.bestPath.join(' → ');
+
+            tspBnbCostEl.textContent = `Cost: ${bnbResult.minCost === -1 ? 'No Tour Found' : bnbResult.minCost}`;
+            tspBnbTimeEl.textContent = `Time: ${bnbTime} ms`;
+            tspBnbPathEl.textContent = bnbResult.bestPath.join(' → ');
+
+            let optimalCost = bnbResult.minCost;
+            let message = `Both exact algorithms found the same optimal tour cost: ${optimalCost}.`;
+            message += ` Performance comparison: B&B (${bnbTime}ms) vs. BT (${btTime}ms). For larger $N$, B&B is significantly faster.`;
+            showMessage(message, false, tspMsgBox);
+
+            // Save results for overall conclusion
+            lastTSPResult = {
+                bt: { cost: btResult.minCost, time: parseFloat(btTime), type: 'Backtracking' },
+                bnb: { cost: bnbResult.minCost, time: parseFloat(bnbTime), type: 'Branch & Bound' },
+                optimalCost: optimalCost
+            };
+            updateOverallConclusion();
+        }
+
+        // --- Assignment Problem (AP) Data Management & UI ---
+
+        let AP_COST_MATRIX = [];
+
+        /** Generates a default, non-symmetric cost matrix. */
+        function generateAPDefaultMatrix(n) {
+            const matrix = Array(n).fill(0).map(() => Array(n).fill(0));
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < n; j++) {
+                    matrix[i][j] = Math.floor(Math.random() * 50) + 1; // Costs 1-50
+                }
+            }
+            return matrix;
+        }
+
+        /** Generates the UI table for the cost matrix. */
+        function generateAPMatrix() {
+            const n = Math.min(parseInt(numAgentsInput.value), 8);
+            if (isNaN(n) || n < 2) return;
+            numAgentsInput.value = n;
+
+            if (AP_COST_MATRIX.length !== n) {
+                AP_COST_MATRIX = generateAPDefaultMatrix(n);
+            }
+
+            let html = `<table class="min-w-full divide-y divide-gray-200 shadow overflow-hidden sm:rounded-lg">`;
+            html += `<thead class="bg-gray-50"><tr class="text-xs font-medium text-gray-500 uppercase tracking-wider"><th>Agent</th>`;
+            for (let j = 0; j < n; j++) {
+                html += `<th class="p-2 text-center">Task ${j + 1}</th>`;
+            }
+            html += `</tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
+
+            for (let i = 0; i < n; i++) {
+                html += `<tr><td class="p-2 text-sm font-medium text-gray-900 text-center bg-gray-50">Agent ${i + 1}</td>`;
+                for (let j = 0; j < n; j++) {
+                    html += `<td class="p-1"><input type="number" min="1" data-row="${i}" data-col="${j}" 
+                             value="${AP_COST_MATRIX[i][j]}" class="matrix-cell bg-white text-sm" 
+                             onchange="updateAPMatrix(this)"></td>`;
+                }
+                html += `</tr>`;
+            }
+            html += `</tbody></table>`;
+            apMatrixContainer.innerHTML = html;
+            log(`Generated ${n}x${n} cost matrix for AP.`);
+        }
+
+        /** Updates the cost matrix based on user input. */
+        function updateAPMatrix(input) {
+            const i = parseInt(input.dataset.row);
+            const j = parseInt(input.dataset.col);
+            const value = parseInt(input.value);
+            const n = AP_COST_MATRIX.length;
+
+            if (isNaN(value) || value <= 0) {
+                log(`Invalid cost value entered.`);
+                input.value = AP_COST_MATRIX[i][j] || 1; // Revert or set default
+                return;
+            }
+
+            if (i >= 0 && i < n && j >= 0 && j < n) {
+                AP_COST_MATRIX[i][j] = value;
+            }
+            log(`Updated cost C(${i + 1}, ${j + 1}) to ${value}`);
+        }
+
+        // --- AP Backtracking (BT) Algorithm (Simple Pruning) ---
+
+        let minAP_BT_Cost;
+        let bestAP_BT_Assignment; // array: bestAP_BT_Assignment[agentIndex] = taskIndex
+
+        function apBacktrackingHelper(agentIndex, currentCost, assignedTasks) {
+            const n = AP_COST_MATRIX.length;
+
+            // Simple Pruning: If current path cost exceeds the best found so far, stop.
+            if (currentCost >= minAP_BT_Cost) {
+                return;
+            }
+
+            // Base Case: All agents assigned
+            if (agentIndex === n) {
+                if (currentCost < minAP_BT_Cost) {
+                    minAP_BT_Cost = currentCost;
+                    bestAP_BT_Assignment = [...assignedTasks];
+                }
+                return;
+            }
+
+            // Recursive Step: Try assigning current agent (agentIndex) to every task
+            for (let task = 0; task < n; task++) {
+                // Check if task is unassigned
+                if (assignedTasks.indexOf(task) === -1) {
+
+                    const cost = AP_COST_MATRIX[agentIndex][task];
+
+                    assignedTasks.push(task); // Assign task
+
+                    apBacktrackingHelper(
+                        agentIndex + 1, // Move to next agent
+                        currentCost + cost,
+                        assignedTasks
+                    );
+
+                    assignedTasks.pop(); // Backtrack (unassign task)
+                }
+            }
+        }
+
+        function apBacktracking() {
+            const n = AP_COST_MATRIX.length;
+            minAP_BT_Cost = INFINITY;
+            bestAP_BT_Assignment = [];
+
+            // assignedTasks holds the task index assigned to agent 0, agent 1, ...
+            apBacktrackingHelper(0, 0, []);
+
+            return {
+                minCost: minAP_BT_Cost === INFINITY ? -1 : minAP_BT_Cost,
+                bestAssignment: bestAP_BT_Assignment.map((taskIndex, agentIndex) => `Agent ${agentIndex + 1} → Task ${taskIndex + 1}`)
+            };
+        }
+
+        // --- AP Branch & Bound (B&B) Algorithm (Aggressive Pruning) ---
+
+        let minAP_BNB_Cost;
+        let bestAP_BNB_Assignment;
+
+        /** Calculates a lower bound: sum of minimum available costs for the remaining unassigned agents. */
+        function calculateAPLowerBound(agentIndex, assignedTasks) {
+            const n = AP_COST_MATRIX.length;
+            let remainingMinCost = 0;
+
+            // Iterate over all remaining agents
+            for (let i = agentIndex; i < n; i++) {
+                let minCostForAgent = INFINITY;
+
+                // Find the minimum available cost for this agent
+                for (let j = 0; j < n; j++) {
+                    if (assignedTasks.indexOf(j) === -1) { // If task j is UNASSIGNED
+                        minCostForAgent = Math.min(minCostForAgent, AP_COST_MATRIX[i][j]);
+                    }
+                }
+                remainingMinCost += minCostForAgent;
+            }
+            return remainingMinCost;
+        }
+
+        function apBnBHelper(agentIndex, currentCost, assignedTasks) {
+            const n = AP_COST_MATRIX.length;
+
+            // Update global minimum cost found
+            if (agentIndex === n) {
+                if (currentCost < minAP_BNB_Cost) {
+                    minAP_BNB_Cost = currentCost;
+                    bestAP_BNB_Assignment = [...assignedTasks];
+                }
+                return;
+            }
+
+            // Aggressive Pruning Check (Bounding)
+            // current cost + estimated minimum remaining cost
+            const lowerBound = currentCost + calculateAPLowerBound(agentIndex, assignedTasks);
+
+            if (lowerBound >= minAP_BNB_Cost) {
+                return; // Prune this branch
+            }
+
+            // Recursive Step: Try assigning current agent (agentIndex) to every task
+            for (let task = 0; task < n; task++) {
+                if (assignedTasks.indexOf(task) === -1) {
+                    const cost = AP_COST_MATRIX[agentIndex][task];
+
+                    assignedTasks.push(task); // Assign task
+
+                    apBnBHelper(
+                        agentIndex + 1, // Move to next agent
+                        currentCost + cost,
+                        assignedTasks
+                    );
+
+                    assignedTasks.pop(); // Backtrack (unassign task)
+                }
+            }
+        }
+
+        function apBranchAndBound() {
+            const n = AP_COST_MATRIX.length;
+            minAP_BNB_Cost = INFINITY;
+            bestAP_BNB_Assignment = [];
+
+            apBnBHelper(0, 0, []);
+
+            return {
+                minCost: minAP_BNB_Cost === INFINITY ? -1 : minAP_BNB_Cost,
+                bestAssignment: bestAP_BNB_Assignment.map((taskIndex, agentIndex) => `Agent ${agentIndex + 1} → Task ${taskIndex + 1}`)
+            };
+        }
+
+        // --- AP Main Controller ---
+
+        function runAP() {
+            hideMessage(apMsgBox);
+            log('Starting Assignment Problem optimization run...');
+            const n = AP_COST_MATRIX.length;
+
+            if (n < 2) {
+                showMessage("Please set the number of Agents/Tasks to 2 or more.", true, apMsgBox);
+                return;
+            }
+
+            // Basic validation
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < n; j++) {
+                    if (AP_COST_MATRIX[i][j] <= 0 || isNaN(AP_COST_MATRIX[i][j])) {
+                        showMessage(`Cost C(${i + 1}, ${j + 1}) must be a positive number.`, true, apMsgBox);
+                        return;
+                    }
+                }
+            }
+
+            // --- Run Backtracking (BT) ---
+            const btStart = performance.now();
+            const btResult = apBacktracking();
+            const btEnd = performance.now();
+            const btTime = (btEnd - btStart).toFixed(3);
+            log(`AP Backtracking complete. Cost: ${btResult.minCost}, Time: ${btTime}ms`);
+
+            // --- Run Branch and Bound (B&B) ---
+            const bnbStart = performance.now();
+            const bnbResult = apBranchAndBound();
+            const bnbEnd = performance.now();
+            const bnbTime = (bnbEnd - bnbStart).toFixed(3);
+            log(`AP Branch & Bound complete. Cost: ${bnbResult.minCost}, Time: ${bnbTime}ms`);
+
+            // --- Update UI ---
+            apBtCostEl.textContent = `Min Cost: ${btResult.minCost === -1 ? 'No Solution Found' : btResult.minCost}`;
+            apBtTimeEl.textContent = `Time: ${btTime} ms`;
+            apBtAssignmentEl.textContent = btResult.bestAssignment.join(' | ');
+
+            apBnbCostEl.textContent = `Min Cost: ${bnbResult.minCost === -1 ? 'No Solution Found' : bnbResult.minCost}`;
+            apBnbTimeEl.textContent = `Time: ${bnbTime} ms`;
+            apBnbAssignmentEl.textContent = bnbResult.bestAssignment.join(' | ');
+
+            let optimalCost = bnbResult.minCost;
+            let message = `Both exact algorithms found the same optimal assignment cost: ${optimalCost}.`;
+            message += ` Performance comparison: B&B (${bnbTime}ms) vs. BT (${btTime}ms). B&B is faster due to aggressive bounding.`;
+            showMessage(message, false, apMsgBox);
+
+            // Save results for overall conclusion
+            lastAPResult = {
+                bt: { cost: btResult.minCost, time: parseFloat(btTime), type: 'Backtracking' },
+                bnb: { cost: bnbResult.minCost, time: parseFloat(bnbTime), type: 'Branch & Bound' },
+                optimalCost: optimalCost
+            };
+            updateOverallConclusion();
+        }
+
+        // --- Overall Conclusion Logic ---
+
+        function getProblemSummary(problemType, results) {
+            if (!results) {
+                return `<p class="text-sm text-gray-500">No data available. Run the ${problemType} problem first.</p>`;
+            }
+
+            if (problemType === 'Knapsack') {
+                const optimalAlgos = [results.dp, results.bt, results.bnb].filter(a => a.value === results.optimalValue);
+                // Handle case where DP/BT/B&B failed (e.g., if input was zeroed out, though prevented by validation)
+                if (optimalAlgos.length === 0) {
+                    return `<p class="text-sm text-gray-500">Error in Knapsack data: No optimal solution could be found by the exact methods.</p>`;
+                }
+                const fastestExact = optimalAlgos.reduce((best, current) => (current.time < best.time ? current : best), optimalAlgos[0]);
+
+                let summary = `For **${problemType}** (Max Value: **${results.optimalValue}**):`;
+                summary += `<ul class="list-disc ml-6 space-y-1 text-sm">`;
+
+                // 1. Fastest Exact Method
+                summary += `<li><span class="font-bold">Fastest Exact Solution:</span> **${fastestExact.type}** (${fastestExact.time}ms). <span class="text-gray-500">This is the best choice when optimality is mandatory.</span></li>`;
+
+                // 2. Greedy comparison
+                if (results.greedy.optimal) {
+                    summary += `<li><span class="font-bold">Approximation Speed:</span> The **Greedy Heuristic** found the optimal value and was the **overall fastest** (${results.greedy.time}ms).</li>`;
+                } else {
+                    summary += `<li><span class="font-bold">Approximation Speed:</span> The **Greedy Heuristic** was the fastest (${results.greedy.time}ms) but resulted in a **suboptimal** value (${results.greedy.value}).</li>`;
+                }
+
+                // 3. Comparison between exponential methods
+                const searchComparison = results.bnb.time < results.bt.time ?
+                    `**Branch & Bound** (${results.bnb.time}ms) was <span class="text-indigo-600 font-semibold">faster</span> than **Backtracking** (${results.bt.time}ms), demonstrating the power of bounding.` :
+                    `**Backtracking** (${results.bt.time}ms) was <span class="text-red-600 font-semibold">faster</span> than **Branch & Bound** (${results.bnb.time}ms). This is rare for B&B to lose, often due to high bounding overhead in simple cases.`;
+
+                summary += `<li><span class="font-bold">Search Comparison:</span> ${searchComparison}</li>`;
+
+                summary += `</ul>`;
+                return summary;
+            }
+
+            // Logic for TSP and AP (Minimization)
+            if (problemType === 'TSP' || problemType === 'Assignment') {
+                const optimalCost = results.optimalCost;
+
+                if (optimalCost === -1) {
+                    return `<p class="text-sm text-gray-500">For **${problemType}**, no valid solution could be found with the given matrix.</p>`;
+                }
+
+                const exactAlgos = [results.bt, results.bnb];
+                const fastestExact = exactAlgos.reduce((best, current) => (current.time < best.time ? current : best), exactAlgos[0]);
+
+                let summary = `For **${problemType}** (Min Cost: **${optimalCost}**):`;
+                summary += `<ul class="list-disc ml-6 space-y-1 text-sm">`;
+
+                // 1. Fastest Exact Method (Should be B&B)
+                summary += `<li><span class="font-bold">Fastest Exact Method:</span> **${fastestExact.type}** (${fastestExact.time}ms). <span class="text-gray-500">Always necessary when $N$ is small enough for exact solution.</span></li>`;
+
+                // 2. Comparison between exponential methods
+                if (results.bnb.time < results.bt.time) {
+                    summary += `<li><span class="font-bold">Performance Winner:</span> **Branch & Bound** (${results.bnb.time}ms) was <span class="text-indigo-600 font-semibold">significantly faster</span> than **Backtracking** (${results.bt.time}ms). This gain is vital for larger instances.</li>`;
+                } else {
+                    summary += `<li><span class="font-bold">Performance Winner:</span> **Backtracking** (${results.bt.time}ms) was <span class="text-red-600 font-semibold">faster</span> than **Branch & Bound** (${results.bnb.time}ms) in this run. (Likely due to very small $N$ or high bounding overhead).</li>`;
+                }
+
+                summary += `</ul>`;
+                return summary;
+            }
+
+            return '';
+        }
+
+        function updateOverallConclusion() {
+
+            let html = `
+                <p class="text-xl font-semibold text-gray-900 mb-2">Detailed Strategy Breakdown:</p>
+                <p class="text-sm text-gray-600 mb-4">The "better" algorithm depends on your goal: **Guaranteed Optimality** (DP, B&B, BT) vs. **Maximum Speed** (Greedy). Click "Run Optimization" on each tab to update the analysis below.</p>
+                <div class="space-y-6 mt-4 p-4 bg-white rounded-xl border border-indigo-200 shadow-inner">
+                    <h4 class="text-lg font-bold text-indigo-700 border-b pb-1">Knapsack Problem Analysis (Maximization)</h4>
+                    ${getProblemSummary('Knapsack', lastKnapsackResult)}
+
+                    <h4 class="text-lg font-bold text-indigo-700 border-b pb-1">Traveling Salesperson Problem (TSP) Analysis (Minimization)</h4>
+                    ${getProblemSummary('TSP', lastTSPResult)}
+
+                    <h4 class="text-lg font-bold text-indigo-700 border-b pb-1">Assignment Problem Analysis (Minimization)</h4>
+                    ${getProblemSummary('Assignment', lastAPResult)}
+                </div>
+            `;
+
+            conclusionContent.innerHTML = html;
+        }
+
+
+        // --- Initialization ---
+
+        window.onload = function () {
+            // Initialize Knapsack items
+            addItem(60, 10);
+            addItem(100, 20);
+            addItem(120, 30);
+
+            // Initialize TSP matrix
+            generateMatrix();
+
+            // Initialize AP matrix
+            generateAPMatrix();
+
+            // Start on the Knapsack tab
+            switchTab('knapsack');
+        };
+
+    </script>
+</body>
+
+</html>
