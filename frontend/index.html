@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Combinatorial Optimization: Multi-Problem Solver</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="public/style.css">
+</head>
+
+<body class="p-4 sm:p-8 min-h-screen">
+
+    <div class="max-w-6xl mx-auto container-card rounded-2xl p-6 md:p-10">
+        <h1 class="text-4xl font-extrabold text-gray-800 mb-2 pb-3 border-b-4 border-indigo-200">
+            <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+                Combinatorial Optimization Solver
+            </span>
+        </h1>
+        <p class="text-gray-500 mb-6">A multi-strategy framework for comparing optimization algorithms on different
+            NP-Hard problems.</p>
+
+        <!-- Tab Navigation -->
+        <div class="flex flex-wrap gap-3 mb-8 border-b border-gray-200 pb-3">
+            <button id="knapsack-tab" onclick="switchTab('knapsack')" class="tab-button active px-5 py-2 text-sm">0/1
+                Knapsack Problem</button>
+            <button id="tsp-tab" onclick="switchTab('tsp')" class="tab-button px-5 py-2 text-sm">Traveling Salesperson
+                Problem (TSP)</button>
+            <button id="graph-tab" onclick="switchTab('graph')" class="tab-button px-5 py-2 text-sm">Assignment Problem
+                (Graph Matching)</button>
+        </div>
+
+        <!-- Content Containers -->
+        <div id="knapsack-content" class="tab-content">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Knapsack: DP, Backtracking, B&B vs. Greedy</h2>
+
+            <!-- Input Section (Knapsack) -->
+            <div class="mb-8 p-6 bg-indigo-50/50 rounded-xl border border-indigo-100">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10m0-6h.01"></path>
+                    </svg>
+                    Problem Setup
+                </h3>
+                <div class="mb-4">
+                    <label for="capacity" class="block text-sm font-medium text-gray-700 mb-1">Knapsack Capacity
+                        (W):</label>
+                    <input type="number" id="capacity" class="input-style" value="50" min="1">
+                </div>
+
+                <h4 class="text-lg font-medium text-gray-700 mt-6 mb-3 border-b pb-1">Items (Value, Weight)</h4>
+                <div id="item-list" class="space-y-3">
+                    <!-- Initial items will be added here by JS -->
+                </div>
+
+                <button onclick="addItem()"
+                    class="mt-4 w-full sm:w-auto px-5 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition duration-150 shadow-md hover:shadow-lg">
+                    + Add Item
+                </button>
+            </div>
+
+            <!-- Run Button (Knapsack) -->
+            <button onclick="runKnapsack()"
+                class="w-full text-xl font-bold py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition duration-200 shadow-lg mb-8 hover:shadow-xl transform hover:scale-[1.005]">
+                Run Knapsack Optimization
+            </button>
+
+            <!-- Results Section (Knapsack) -->
+            <div id="knapsack-results" class="space-y-6">
+                <h3 class="text-2xl font-bold text-gray-900 border-b pb-2">Knapsack Comparison Results</h3>
+                <div id="message-box" class="hidden p-4 rounded-xl text-sm font-medium border"></div>
+
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- DP Result Card (Optimal Solution) -->
+                    <div id="dp-result" class="result-card p-5 rounded-xl border-l-blue-500 bg-white shadow-md">
+                        <h4 class="text-lg font-bold text-blue-800 mb-1 flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m5.618-4.203a4.994 4.994 0 011.752 1.83C22.259 8.683 22 11 22 12c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2c2.193 0 4.242.756 5.858 2.036">
+                                </path>
+                            </svg>
+                            DP
+                        </h4>
+                        <p class="text-xs text-gray-500 mb-3">Optimal, Pseudo-polynomial</p>
+                        <p class="text-3xl font-extrabold text-blue-600 mb-1" id="dp-value">N/A</p>
+                        <p class="text-sm font-medium text-gray-700" id="dp-time">Time: N/A</p>
+                        <div class="mt-3">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-blue-700">Selected
+                                Items:</span>
+                            <p class="text-xs text-gray-800 break-words" id="dp-items-list">No items selected.</p>
+                        </div>
+                    </div>
+
+                    <!-- Branch & Bound Result Card (Optimized Search) -->
+                    <div id="bnb-result" class="result-card p-5 rounded-xl border-l-purple-500 bg-white shadow-md">
+                        <h4 class="text-lg font-bold text-purple-800 mb-1 flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 0a9 9 0 019-9m-9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9c-.75 0-1.472.194-2.105.54M9 16.79C12.985 17.76 15 15.65 15 12c0-3.65-2.015-5.76-6-6.79">
+                                </path>
+                            </svg>
+                            B&B
+                        </h4>
+                        <p class="text-xs text-gray-500 mb-3">Optimal, Exponential (Pruned)</p>
+                        <p class="text-3xl font-extrabold text-purple-600 mb-1" id="bnb-value">N/A</p>
+                        <p class="text-sm font-medium text-gray-700" id="bnb-time">Time: N/A</p>
+                        <div class="mt-3">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-purple-700">Selected
+                                Items:</span>
+                            <p class="text-xs text-gray-800 break-words" id="bnb-items-list">No items selected.</p>
+                        </div>
+                    </div>
+
+                    <!-- Backtracking Result Card (Brute-Force Exact) -->
+                    <div id="bt-result" class="result-card p-5 rounded-xl border-l-red-500 bg-white shadow-md">
+                        <h4 class="text-lg font-bold text-red-800 mb-1 flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z">
+                                </path>
+                            </svg>
+                            Backtracking
+                        </h4>
+                        <p class="text-xs text-gray-500 mb-3">Optimal, Pure Exponential</p>
+                        <p class="text-3xl font-extrabold text-red-600 mb-1" id="bt-value">N/A</p>
+                        <p class="text-sm font-medium text-gray-700" id="bt-time">Time: N/A</p>
+                        <div class="mt-3">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-red-700">Selected
+                                Items:</span>
+                            <p class="text-xs text-gray-800 break-words" id="bt-items-list">No items selected.</p>
+                        </div>
+                    </div>
+
+                    <!-- Greedy Result Card (Approximation) -->
+                    <div id="greedy-result" class="result-card p-5 rounded-xl border-l-amber-500 bg-white shadow-md">
+                        <h4 class="text-lg font-bold text-amber-800 mb-1 flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                            Greedy
+                        </h4>
+                        <p class="text-xs text-gray-500 mb-3">Approximation, Fast</p>
+                        <p class="text-3xl font-extrabold text-amber-600 mb-1" id="greedy-value">N/A</p>
+                        <p class="text-sm font-medium text-gray-700" id="greedy-time">Time: N/A</p>
+                        <div class="mt-3">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-amber-700">Selected
+                                Items:</span>
+                            <p class="text-xs text-gray-800 break-words" id="greedy-items-list">No items selected.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tsp-content" class="tab-content hidden">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">TSP: Backtracking vs. Branch & Bound</h2>
+
+            <!-- Input Section (TSP) -->
+            <div class="mb-8 p-6 bg-indigo-50/50 rounded-xl border border-indigo-100">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z">
+                        </path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    Problem Setup (Distance Matrix)
+                </h3>
+
+                <div class="mb-4 flex items-center gap-4">
+                    <label for="num-cities" class="block text-sm font-medium text-gray-700">Number of Cities
+                        (N):</label>
+                    <input type="number" id="num-cities" class="input-style w-20" value="5" min="3" max="10"
+                        onchange="generateMatrix()">
+                    <p class="text-xs text-red-500">(Max 10 for performance)</p>
+                </div>
+
+                <h4 class="text-lg font-medium text-gray-700 mt-6 mb-3 border-b pb-1">Distances (Set $D_{i,j}$)</h4>
+                <div id="distance-matrix-container" class="overflow-x-auto">
+                    <!-- Matrix table generated here -->
+                </div>
+            </div>
+
+            <!-- Run Button (TSP) -->
+            <button onclick="runTSP()"
+                class="w-full text-xl font-bold py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition duration-200 shadow-lg mb-8 hover:shadow-xl transform hover:scale-[1.005]">
+                Run TSP Optimization
+            </button>
+
+            <!-- Results Section (TSP) -->
+            <div id="tsp-results" class="space-y-6">
+                <h3 class="text-2xl font-bold text-gray-900 border-b pb-2">TSP Comparison Results</h3>
+                <div id="tsp-message-box" class="hidden p-4 rounded-xl text-sm font-medium border"></div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Branch & Bound TSP Result Card -->
+                    <div id="tsp-bnb-result" class="result-card p-5 rounded-xl border-l-purple-500 bg-white shadow-md">
+                        <h4 class="text-lg font-bold text-purple-800 mb-1 flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                            Branch & Bound
+                        </h4>
+                        <p class="text-xs text-gray-500 mb-3">Optimal, Exponential (Pruned)</p>
+                        <p class="text-3xl font-extrabold text-purple-600 mb-1" id="tsp-bnb-cost">N/A</p>
+                        <p class="text-sm font-medium text-gray-700" id="tsp-bnb-time">Time: N/A</p>
+                        <div class="mt-3">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-purple-700">Shortest
+                                Tour:</span>
+                            <p class="text-xs text-gray-800 break-words" id="tsp-bnb-path">No path found.</p>
+                        </div>
+                    </div>
+
+                    <!-- Backtracking TSP Result Card -->
+                    <div id="tsp-bt-result" class="result-card p-5 rounded-xl border-l-red-500 bg-white shadow-md">
+                        <h4 class="text-lg font-bold text-red-800 mb-1 flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Backtracking
+                        </h4>
+                        <p class="text-xs text-gray-500 mb-3">Optimal, Pure Exponential</p>
+                        <p class="text-3xl font-extrabold text-red-600 mb-1" id="tsp-bt-cost">N/A</p>
+                        <p class="text-sm font-medium text-gray-700" id="tsp-bt-time">Time: N/A</p>
+                        <div class="mt-3">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-red-700">Shortest
+                                Tour:</span>
+                            <p class="text-xs text-gray-800 break-words" id="tsp-bt-path">No path found.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="graph-content" class="tab-content hidden">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Assignment Problem (Graph Matching): Backtracking vs.
+                Branch & Bound</h2>
+
+            <!-- Input Section (Assignment Problem) -->
+            <div class="mb-8 p-6 bg-indigo-50/50 rounded-xl border border-indigo-100">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                        </path>
+                    </svg>
+                    Problem Setup (Cost Matrix)
+                </h3>
+
+                <div class="mb-4 flex items-center gap-4">
+                    <label for="num-agents" class="block text-sm font-medium text-gray-700">Number of Agents/Tasks
+                        (N):</label>
+                    <input type="number" id="num-agents" class="input-style w-20" value="4" min="2" max="8"
+                        onchange="generateAPMatrix()">
+                    <p class="text-xs text-red-500">(Max 8 for performance)</p>
+                </div>
+
+                <h4 class="text-lg font-medium text-gray-700 mt-6 mb-3 border-b pb-1">Cost Matrix (Cost of Agent $i$
+                    performing Task $j$)</h4>
+                <div id="ap-matrix-container" class="overflow-x-auto">
+                    <!-- Matrix table generated here -->
+                </div>
+            </div>
+
+            <!-- Run Button (AP) -->
+            <button onclick="runAP()"
+                class="w-full text-xl font-bold py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition duration-200 shadow-lg mb-8 hover:shadow-xl transform hover:scale-[1.005]">
+                Run Assignment Optimization
+            </button>
+
+            <!-- Results Section (AP) -->
+            <div id="ap-results" class="space-y-6">
+                <h3 class="text-2xl font-bold text-gray-900 border-b pb-2">Assignment Comparison Results</h3>
+                <div id="ap-message-box" class="hidden p-4 rounded-xl text-sm font-medium border"></div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Branch & Bound AP Result Card -->
+                    <div id="ap-bnb-result" class="result-card p-5 rounded-xl border-l-purple-500 bg-white shadow-md">
+                        <h4 class="text-lg font-bold text-purple-800 mb-1 flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z">
+                                </path>
+                            </svg>
+                            Branch & Bound
+                        </h4>
+                        <p class="text-xs text-gray-500 mb-3">Optimal, Exponential (Pruned)</p>
+                        <p class="text-3xl font-extrabold text-purple-600 mb-1" id="ap-bnb-cost">N/A</p>
+                        <p class="text-sm font-medium text-gray-700" id="ap-bnb-time">Time: N/A</p>
+                        <div class="mt-3">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-purple-700">Optimal
+                                Assignment:</span>
+                            <p class="text-xs text-gray-800 break-words" id="ap-bnb-assignment">No assignment found.</p>
+                        </div>
+                    </div>
+
+                    <!-- Backtracking AP Result Card -->
+                    <div id="ap-bt-result" class="result-card p-5 rounded-xl border-l-red-500 bg-white shadow-md">
+                        <h4 class="text-lg font-bold text-red-800 mb-1 flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0h10">
+                                </path>
+                            </svg>
+                            Backtracking
+                        </h4>
+                        <p class="text-xs text-gray-500 mb-3">Optimal, Pure Exponential</p>
+                        <p class="text-3xl font-extrabold text-red-600 mb-1" id="ap-bt-cost">N/A</p>
+                        <p class="text-sm font-medium text-gray-700" id="ap-bt-time">Time: N/A</p>
+                        <div class="mt-3">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-red-700">Optimal
+                                Assignment:</span>
+                            <p class="text-xs text-gray-800 break-words" id="ap-bt-assignment">No assignment found.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Developer Message Box -->
+        <div id="dev-console" class="mt-10 p-4 bg-gray-800 rounded-lg text-xs font-mono text-gray-300 shadow-inner">
+            Console Output: Ready to run.
+        </div>
+    </div>
+
+    <!-- Overall Strategy Conclusion Section -->
+    <div class="max-w-6xl mx-auto container-card rounded-2xl p-6 md:p-10 mt-8 border-t-8 border-indigo-500/80">
+        <h2 class="text-3xl font-bold text-indigo-700 mb-4 flex items-center gap-2">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 19V6a2 2 0 00-2-2H5a2 2 0 00-2 2v13m7 0v-4a2 2 0 012-2h2a2 2 0 012 2v4m-7 0h7"></path>
+            </svg>
+            Overall Strategy Conclusion: Which Algorithm Was Best?
+        </h2>
+        <div id="overall-conclusion-content" class="space-y-4 text-gray-800">
+            <p class="text-lg">Run at least one problem (Knapsack, TSP, or Assignment) to generate a comparative
+                analysis here.</p>
+        </div>
+    </div>
+
+    <script src="public/script.js"></script>
+</body>
+
+</html>
